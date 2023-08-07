@@ -49,26 +49,33 @@ function install_python() {
 
     # 检查是否已安装所选版本的Python
     if python3 --version | grep -q "Python $selected_version"; then
-        echo "Python $selected_version 已安装。"
-    else
-        # 下载已编译好的Python版本并解压
-        echo "正在下载 Python $selected_version ..."
-        wget --progress=bar:force:noscroll https://www.python.org/ftp/python/$selected_version/Python-$selected_version.tgz
-        tar -xzf Python-$selected_version.tgz
-        cd Python-$selected_version
+        read -p "Python $selected_version 已安装，是否要覆盖安装？(y/n): " overwrite_choice
 
-        # 安装Python
-        sudo ./configure --enable-optimizations
-        sudo make -j$(nproc)
-        sudo make altinstall
-
-        # 删除临时文件
-        cd ..
-        rm -rf Python-$selected_version.tgz Python-$selected_version
-
-        echo "Python $selected_version 安装完成。"
+        if [[ "$overwrite_choice" =~ ^[Yy]$ ]]; then
+            # 卸载已安装的Python版本
+            uninstall_python
+        else
+            echo "已取消安装 Python $selected_version。"
+            return
+        fi
     fi
 
+    # 下载已编译好的Python版本并解压
+    echo "正在下载 Python $selected_version ..."
+    wget --progress=bar:force:noscroll https://www.python.org/ftp/python/$selected_version/Python-$selected_version.tgz
+    tar -xzf Python-$selected_version.tgz
+    cd Python-$selected_version
+
+    # 安装Python
+    sudo ./configure --enable-optimizations
+    sudo make -j$(nproc)
+    sudo make altinstall
+
+    # 删除临时文件
+    cd ..
+    rm -rf Python-$selected_version.tgz Python-$selected_version
+
+    echo "Python $selected_version 安装完成。"
     check_python_version
 }
 
@@ -78,14 +85,9 @@ function uninstall_python() {
         current_version=$(python3 --version | awk '{print $2}')
         echo "当前已安装的Python版本为：$current_version"
 
-        # 用户确认是否卸载已安装的Python版本
-        read -p "是否要卸载当前已安装的Python版本？(y/n): " uninstall_choice
-
-        if [[ "$uninstall_choice" =~ ^[Yy]$ ]]; then
-            echo "正在卸载 Python $current_version ..."
-            sudo yum remove -y python$current_version python$current_version-libs
-            echo "Python $current_version 卸载完成。"
-        fi
+        echo "正在卸载 Python $current_version ..."
+        sudo yum remove -y python$current_version python$current_version-libs
+        echo "Python $current_version 卸载完成。"
     else
         echo "未找到已安装的Python版本。"
     fi
