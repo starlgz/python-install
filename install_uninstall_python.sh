@@ -13,22 +13,18 @@ function install_python() {
         return
     fi
 
-    # 列出可供选择的Python版本
-    echo "可供选择的Python版本："
-    echo "1) Python 3.7"
-    echo "2) Python 3.8"
-    echo "3) Python 3.9"
-    read -p "请选择要安装的Python版本（输入对应的数字）： " choice
+    # 根据用户选择下载Python的源代码
+    read -p "请选择要安装的Python版本(3.7/3.8/3.9)： " version
 
-    case "$choice" in
-        1)
-            version=3.7
+    case "$version" in
+        3.7)
+            wget https://www.python.org/ftp/python/3.7.12/Python-3.7.12.tgz
             ;;
-        2)
-            version=3.8
+        3.8)
+            wget https://www.python.org/ftp/python/3.8.12/Python-3.8.12.tgz
             ;;
-        3)
-            version=3.9
+        3.9)
+            wget https://www.python.org/ftp/python/3.9.7/Python-3.9.7.tgz
             ;;
         *)
             echo "无效的选择。"
@@ -36,12 +32,9 @@ function install_python() {
             ;;
     esac
 
-    # 根据用户选择下载Python的源代码
-    wget https://www.python.org/ftp/python/$version.$((RANDOM%10))/Python-$version.$((RANDOM%10)).$((RANDOM%10)).tgz
-
     # 解压源代码并进入目录
-    tar -xf Python-$version.$((RANDOM%10)).$((RANDOM%10)).tgz
-    cd Python-$version.$((RANDOM%10)).$((RANDOM%10))
+    tar -xf Python-$version.tgz
+    cd Python-$version
 
     # 编译和安装Python
     ./configure --enable-optimizations
@@ -50,8 +43,7 @@ function install_python() {
 
     # 删除源代码和压缩包
     cd ..
-    rm -rf Python-$version.$((RANDOM%10)).$((RANDOM%10)).tgz
-    rm -rf Python-$version.$((RANDOM%10)).$((RANDOM%10))
+    rm -rf Python-$version*
 
     # 设置Python为默认版本
     sudo ln -s /usr/local/bin/python$version /usr/local/bin/python3
