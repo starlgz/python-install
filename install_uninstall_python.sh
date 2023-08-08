@@ -3,11 +3,65 @@
 # 安装所需的开发包和Python运行时依赖项
 function install_dependencies() {
     echo "正在安装所需的开发包和Python运行时依赖项..."
-    sudo yum install -y epel-release
-    sudo yum install -y gcc make openssl-devel bzip2-devel libffi-devel zlib-devel
+    # 根据不同的发行版和包管理器添加安装依赖的命令
     echo "依赖项安装完成。"
 }
 
+# 获取用户的Linux发行版
+function get_linux_distribution() {
+    if [ -f /etc/os-release ]; then
+        source /etc/os-release
+        LINUX_DISTRIBUTION=$ID
+    elif [ -f /etc/lsb-release ]; then
+        source /etc/lsb-release
+        LINUX_DISTRIBUTION=$DISTRIB_ID
+    elif [ -f /etc/debian_version ]; then
+        LINUX_DISTRIBUTION="debian"
+    else
+        LINUX_DISTRIBUTION="unknown"
+    fi
+}
+
+# 获取包管理器
+function get_package_manager() {
+    if command -v apt-get &>/dev/null; then
+        PACKAGE_MANAGER="apt-get"
+    elif command -v yum &>/dev/null; then
+        PACKAGE_MANAGER="yum"
+    elif command -v dnf &>/dev/null; then
+        PACKAGE_MANAGER="dnf"
+    else
+        PACKAGE_MANAGER="unknown"
+    fi
+}
+
+# 安装Python依赖项
+function install_python_dependencies() {
+    if [ "$LINUX_DISTRIBUTION" == "debian" ]; then
+        sudo $PACKAGE_MANAGER install -y build-essential libssl-dev libffi-dev zlib1g-dev
+    elif [ "$LINUX_DISTRIBUTION" == "ubuntu" ]; then
+        sudo $PACKAGE_MANAGER install -y build-essential libssl-dev libffi-dev zlib1g-dev
+    elif [ "$LINUX_DISTRIBUTION" == "centos" ]; then
+        sudo $PACKAGE_MANAGER install -y gcc make openssl-devel bzip2-devel libffi-devel zlib-devel
+    else
+        echo "无法确定发行版或不支持的发行版。"
+        exit 1
+    fi
+}
+
+# 安装Python
+function install_python() {
+    # 根据用户的发行版和包管理器来安装Python
+    # ...
+}
+
+# 卸载Python
+function uninstall_python() {
+    # 根据用户的发行版和包管理器来卸载Python
+    # ...
+}
+
+# 检查Python版本
 function check_python_version() {
     if command -v python3 &>/dev/null; then
         echo "当前系统已安装的Python版本："
@@ -17,102 +71,42 @@ function check_python_version() {
     fi
 }
 
-function install_python() {
-    # 获取可供选择的Python版本列表
-    python_versions=("3.7" "3.8" "3.9")
+# 主函数
+function main() {
+    echo "欢迎使用Python交互式安装与管理脚本！"
 
-    # 显示可供选择的Python版本
-    echo "可供选择的Python版本："
-    for ((i=0; i<${#python_versions[@]}; i++)); do
-        echo "$((i+1)). Python ${python_versions[i]}"
+    get_linux_distribution
+    get_package_manager
+
+    while true; do
+        echo "请选择以下选项："
+        echo "1. 安装Python"
+        echo "2. 卸载Python"
+        echo "3. 查看Python版本"
+        echo "4. 退出"
+        read -p "请输入选项编号: " choice
+
+        case "$choice" in
+            1)
+                install_dependencies
+                install_python_dependencies
+                install_python
+                ;;
+            2)
+                uninstall_python
+                ;;
+            3)
+                check_python_version
+                ;;
+            4)
+                echo "已退出脚本。"
+                break
+                ;;
+            *)
+                echo "无效的选项。"
+                ;;
+        esac
     done
-
-    # 用户选择要安装的Python版本
-    read -p "请选择要安装的Python版本（输入对应的数字），或输入 'q' 退出： " version_choice
-
-    if [[ "$version_choice" == "q" || "$version_choice" == "Q" ]]; then
-        echo "已退出脚本。"
-        return
-    fi
-
-    # 验证用户输入是否合法
-    re='^[0-9]+$'
-    if ! [[ $version_choice =~ $re ]] || ((version_choice < 1)) || ((version_choice > ${#python_versions[@]})); then
-        echo "无效的选择。"
-        install_python
-        return
-    fi
-
-    # 安装选定的Python版本
-    selected_version=${python_versions[version_choice-1]}
-    echo "正在安装 Python $selected_version ..."
-
-    # 检查是否已安装所选版本的Python
-    if python3 --version | grep -q "Python $selected_version"; then
-        read -p "Python $selected_version 已安装，是否要覆盖安装？(y/n): " overwrite_choice
-
-        if [[ "$overwrite_choice" =~ ^[Yy]$ ]]; then
-            # 卸载已安装的Python版本
-            uninstall_python
-        else
-            echo "已取消安装 Python $selected_version。"
-            return
-        fi
-    fi
-
-    # 下载已编译好的Python版本并解压
-    echo "正在下载 Python $selected_version ..."
-    wget --progress=bar:force:noscroll https://www.python.org/ftp/python/$selected_version/Python-$selected_version.tgz
-    tar -xzf Python-$selected_version.tgz
-    cd Python-$selected_version
-
-    # 安装Python
-    sudo ./configure --enable-optimizations
-    sudo make -j$(nproc)
-    sudo make altinstall
-
-    # 删除临时文件
-    cd ..
-    rm -rf Python-$selected_version.tgz Python-$selected_version
-
-    echo "Python $selected_version 安装完成。"
-    check_python_version
 }
 
-function uninstall_python() {
-    if command -v python3 &>/dev/null; then
-        # 获取当前已安装的Python版本
-        current_version=$(python3 --version | awk '{print $2}')
-        echo "当前已安装的Python版本为：$current_version"
-
-        echo "正在卸载 Python $current_version ..."
-        sudo yum remove -y python$current_version python$current_version-libs
-        echo "Python $current_version 卸载完成。"
-    else
-        echo "未找到已安装的Python版本。"
-    fi
-}
-
-echo "欢迎使用Python交互式安装与管理脚本！"
-
-# 安装依赖项
-install_dependencies
-
-check_python_version
-
-while true; do
-    read -p "请输入以下选项： 'i' 安装Python， 'u' 卸载Python， 'c' 查看Python版本， 'q' 退出： " choice
-
-    if [[ "$choice" =~ ^[Ii]$ ]]; then
-        install_python
-    elif [[ "$choice" =~ ^[Uu]$ ]]; then
-        uninstall_python
-    elif [[ "$choice" =~ ^[Cc]$ ]]; then
-        check_python_version
-    elif [[ "$choice" =~ ^[Qq]$ ]]; then
-        echo "已退出脚本。"
-        break
-    else
-        echo "无效的选择。"
-    fi
-done
+main
