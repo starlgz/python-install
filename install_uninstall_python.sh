@@ -15,6 +15,7 @@ python_menu = tk.Menu(menu_bar, tearoff=0)
 def install_python():
     version = input("请输入要安装的Python版本：")
     subprocess.call(["sudo", "apt-get", "install", "python" + version])
+    show_menu()
 
 install_menu = tk.Menu(python_menu, tearoff=0)
 install_menu.add_command(label="安装Python", command=install_python)
@@ -24,6 +25,7 @@ python_menu.add_cascade(label="安装", menu=install_menu)
 def uninstall_python():
     version = input("请输入要卸载的Python版本：")
     subprocess.call(["sudo", "apt-get", "remove", "python" + version])
+    show_menu()
 
 uninstall_menu = tk.Menu(python_menu, tearoff=0)
 uninstall_menu.add_command(label="卸载Python", command=uninstall_python)
@@ -36,6 +38,7 @@ def list_python_versions():
     print("所有Python版本：")
     for version in versions:
         print(version)
+    show_menu()
 
 list_menu = tk.Menu(python_menu, tearoff=0)
 list_menu.add_command(label="列出所有Python版本", command=list_python_versions)
@@ -72,8 +75,26 @@ menu_bar.add_cascade(label="交互式", menu=interactive_menu)
 # 显示菜单栏
 root.config(menu=menu_bar)
 
+# 显示菜单选项
+def show_menu():
+    print("作者：满天繁星")
+    print("1. 安装Python")
+    print("2. 卸载Python")
+    print("3. 列出所有Python版本")
+    print("4. 进入交互式命令行")
+    print("0. 退出脚本")
+
 # 进入消息循环
 while True:
-    root.update()
-    root.update_idletasks()
-    input("按下回车键继续...")
+    show_menu()
+    choice = input("请输入您的选择（0-4）：")
+    if choice == "0":
+        break
+    elif choice == "1":
+        install_python()
+    elif choice == "2":
+        uninstall_python()
+    elif choice == "3":
+        list_python_versions()
+    elif choice == "4":
+        interactive()
