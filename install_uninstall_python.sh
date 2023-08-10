@@ -1,5 +1,6 @@
 import tkinter as tk
 import subprocess
+import sys
 
 # 创建主窗口
 root = tk.Tk()
@@ -55,6 +56,15 @@ menu_bar.add_cascade(label="帮助", menu=help_menu)
 # 显示菜单栏
 root.config(menu=menu_bar)
 
+# 显示菜单选项
+def show_menu():
+    print("\033[1;32m作者：满天繁星\033[0m")
+    print("1. 安装Python")
+    print("2. 卸载Python")
+    print("3. 列出所有Python版本")
+    print("4. 进入交互式命令行")
+    print("0. 退出脚本")
+
 # 定义交互式命令
 def interactive():
     print("欢迎使用Python交互式命令行！")
@@ -66,6 +76,10 @@ def interactive():
             exec(command)
         except Exception as e:
             print(e)
+            print("\033[1;31m错误：{}\033[0m".format(e))
+            print("\033[1;33m正在修复错误...\033[0m")
+            subprocess.call([sys.executable] + sys.argv)
+            sys.exit()
 
 # 创建交互式菜单
 interactive_menu = tk.Menu(menu_bar, tearoff=0)
@@ -76,17 +90,10 @@ menu_bar.add_cascade(label="交互式", menu=interactive_menu)
 root.config(menu=menu_bar)
 
 # 显示菜单选项
-def show_menu():
-    print("作者：满天繁星")
-    print("1. 安装Python")
-    print("2. 卸载Python")
-    print("3. 列出所有Python版本")
-    print("4. 进入交互式命令行")
-    print("0. 退出脚本")
+show_menu()
 
 # 进入消息循环
 while True:
-    show_menu()
     choice = input("请输入您的选择（0-4）：")
     if choice == "0":
         break
@@ -98,3 +105,8 @@ while True:
         list_python_versions()
     elif choice == "4":
         interactive()
+    else:
+        print("无效的选择，请重新输入！")
+
+# 显示菜单选项
+show_menu()
